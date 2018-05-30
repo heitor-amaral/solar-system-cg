@@ -10,6 +10,10 @@
 
 using namespace std;
 
+static float d = 5.0;           // Intensidade da cor difusa da luz branca
+static float e = 5.0;           // Intensidade da cor especular da luz branca
+static float m = 0.2;           // Intensidade da luz ambiente global
+static float p = 1.0;           // A luz branca é posicional?
 static float s = 50.0;          // Expoente especular do material (shininess)
 float matShine[] = { s };                       // expoente especular (shininess)
 static float xMouse = 250, yMouse = 250;        // (x,y) do ponteiro do mouse
@@ -17,6 +21,8 @@ static float larguraJanela, alturaJanela;       // (w,h) da janela
 static float anguloEsferaY = 0;                 // Rotação da esfera em torno do eixo y
 static int esferaLados = 200;                  // Quantas subdivisões latitudinais/longitudinais da esfera
 static bool usarTextura = true;
+static bool localViewer = false;
+
 
 bool orbita = false;
 bool fullScreen = false;
@@ -24,7 +30,7 @@ bool planoOrbital = false;
 bool normal = false;
 
 //CAMERA
-int camera = 0;
+int camera = 1;
 int olharX = 0;
 int olharY = 0;
 //CAMERA
@@ -46,6 +52,11 @@ static int uranus__rings;
 static int neptune_rings;
 static int jupiter_rings;
 //VARIAVEIS DE TEXTURA
+
+float lightAmb[] = { 0.0, 0.0, 0.0, 1.0 };
+float lightDif0[] = { d, d, d, 1.0 };
+float lightSpec0[] = { e, e, e, 1.0 };
+float lightPos0[] = { 0.5, 0.5, 0.5, 1 };
 
 void escreveTexto(void* font, char* s, float x, float y,float z)
 {
@@ -81,7 +92,7 @@ void desenhaHUD()
     glColor3f(.85f, .85f, .85f);
 
     escreveTexto(GLUT_BITMAP_HELVETICA_18, "CAMERA", -40.0, 38, -40.0); //x,y,z
-    escreveNumero(GLUT_BITMAP_HELVETICA_18, camera, -33.0, 38, -40.0);
+    escreveNumero(GLUT_BITMAP_HELVETICA_18, camera, -23.0, 38, -40.0);
 }
 
 
@@ -422,12 +433,16 @@ int subdivisoes = 100;
 
 void desenhaSol()
 {
+    
 // Desenha a esfera grande e bem arredondada
     if (usarTextura) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, sun);
+        glDisable(GL_LIGHTING);
     }
     glPushMatrix();
+        
+        glTranslatef(0,0,0);
         glRotatef(anguloEsferaY, 0, 1, 0);
         glRotatef(90, 1, 0, 0);
         solidSphere(20, esferaLados, esferaLados);
@@ -706,12 +721,20 @@ void desenhaSkySphere()
 // Callback de desenho
 void desenhaCena()
 {
+
+    float globAmb[] = { m, m, m, 1.0 };
+
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globAmb);        // Luz ambiente global
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, localViewer);// Enable local viewpoint
+
+    
     // Limpa a tela e o z-buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
     desenhaHUD();
 
+    /*
     if(camera == 0)
     {
         // Posiciona a câmera de acordo com posição x,y do mouse na janela
@@ -719,7 +742,7 @@ void desenhaCena()
                   0, 0, 0,
                   0, 1, 0);
     }
-
+    */
     if(camera == 1)
     {
         // Posiciona a câmera de acordo com posição x,y do mouse na janela
@@ -737,6 +760,14 @@ void desenhaCena()
                   0, 1, 0);
     }
 
+    if(camera == 3)
+    {
+        int distanciaAteOSol = 120;
+        gluLookAt(distanciaAteOSol*cos(anguloEsferaY/20)+20,0,distanciaAteOSol*sin(anguloEsferaY/20)+20,
+                    0,0,0,
+                    0,1,0 );
+    }
+
     if(planoOrbital)
     {
         glPushMatrix();
@@ -745,8 +776,19 @@ void desenhaCena()
         glPopMatrix();
     }
 
+    // Propriedades da fonte de luz LIGHT0
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif0);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+
     desenhaSkySphere();
     desenhaSol();
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0); //Habilita iluminacaos
+
     desenhaMercurio();
     desenhaVenus();
     desenhaTerra();
@@ -772,8 +814,8 @@ void keyInput(unsigned char key, int x, int y)
     case 'C':
         camera++;
 
-        if(camera>2)
-            camera = 0;
+        if(camera>3)
+            camera = 1;
         break;
 
     case 'w':
