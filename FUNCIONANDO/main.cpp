@@ -8,6 +8,10 @@
 #include <math.h>
 #include <string.h>
 
+#include <SDL/SDL.h>
+#include <SDL/SDL_audio.h>
+#include <SDL/SDL_mixer.h>
+
 using namespace std;
 
 static float d = 5.0;           // Intensidade da cor difusa da luz branca
@@ -22,6 +26,7 @@ static float anguloEsferaY = 0;                 // Rotação da esfera em torno 
 static int esferaLados = 200;                  // Quantas subdivisões latitudinais/longitudinais da esfera
 static bool usarTextura = true;
 static bool localViewer = false;
+bool iluminacao = true;
 
 
 bool orbita = false;
@@ -57,6 +62,30 @@ float lightAmb[] = { 0.0, 0.0, 0.0, 1.0 };
 float lightDif0[] = { d, d, d, 1.0 };
 float lightSpec0[] = { e, e, e, 1.0 };
 float lightPos0[] = { 0.5, 0.5, 0.5, 1 };
+
+
+int volume_musica=100;
+Mix_Music *musicMenu=NULL;
+
+//Musica de fundo do jogo
+void iniciar_musica(char  *music){
+	if(!Mix_PlayingMusic()){
+		Mix_OpenAudio(22050,MIX_DEFAULT_FORMAT,2,1024);
+		//atexit(Mix_LoadMUS(music));
+		musicMenu=Mix_LoadMUS(music);
+		Mix_VolumeMusic(volume_musica);
+		Mix_PlayMusic(musicMenu,-1);
+        
+	}
+}
+void parar_musica(){
+	if(Mix_PlayingMusic()){
+		Mix_FadeOutMusic(1000);
+	}
+}
+//Musica de fundo do jogo
+
+
 
 void escreveTexto(void* font, char* s, float x, float y,float z)
 {
@@ -323,6 +352,8 @@ void setup(void)
     glEnable(GL_DEPTH_TEST);                        // Ativa teste Z
 
     carregaTextura();
+
+    iniciar_musica("Heliosphere.mp3");
 
     float matAmbAndDif[] = {1.0, 1.0, 1.0, 1.0};    // cor ambiente e difusa: branca
     float matSpec[] = { 1.0, 1.0, 1,0, 1.0 };       // cor especular: branca
@@ -786,8 +817,15 @@ void desenhaCena()
     desenhaSkySphere();
     desenhaSol();
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0); //Habilita iluminacaos
+    if(iluminacao)
+    {
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0); //Habilita iluminacaos
+    } else{
+        glDisable(GL_LIGHTING);
+        glDisable(GL_LIGHT0); //Habilita iluminacaos
+        
+    }
 
     desenhaMercurio();
     desenhaVenus();
@@ -810,6 +848,11 @@ void keyInput(unsigned char key, int x, int y)
         exit(0);
         break;
 
+
+    case 'i':
+    case 'I':
+        iluminacao = !iluminacao;
+        break;
     case 'c':
     case 'C':
         camera++;
