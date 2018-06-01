@@ -1,7 +1,7 @@
 TP 2 - CEFET-MG
 =====================================
 
-![Print](https://imgur.com/RlB9YkY)
+![Picture](https://github.com/heitor-amaral/tp2/blob/master/Captura%20de%20tela%20de%202018-05-31%2021-14-22.png)
 
 ## Bibliotecas utilizadas:
 
