@@ -26,5 +26,5 @@ GitHub: https://github.com/heitor-amaral/tp2
 ## Para instalar dependencias necessárias do jogo:
 ######  sudo apt-get -y install build-essential mesa-common-dev gcc freeglut3-dev libglew-dev libsoil-dev libsdl1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev
 
-Instruções para compilar:
+## Instruções para compilar:
 ######   make run
