@@ -12,8 +12,14 @@
 #include <SDL/SDL_audio.h>
 #include <SDL/SDL_mixer.h>
 
+# define menu 1
+# define aplicacao 2
+# define sair 3
+
 
 using namespace std;
+
+int estado;
 
 static float d = 5.0;           // Intensidade da cor difusa da luz branca
 static float e = 5.0;           // Intensidade da cor especular da luz branca
@@ -64,6 +70,8 @@ static int uranus__rings;
 static int neptune_rings;
 static int jupiter_rings;
 static int stewart;
+static int inicio;
+static int Sair;
 //VARIAVEIS DE TEXTURA
 
 //ILUMINACAO
@@ -83,7 +91,6 @@ void carregaTextura();
 int volume_musica=100;
 Mix_Music *musicMenu=NULL;
 
-
 void iniciar_musica(char  *music){
 	if(!Mix_PlayingMusic()){
 		Mix_OpenAudio(22050,MIX_DEFAULT_FORMAT,2,1024);
@@ -101,33 +108,6 @@ void parar_musica(){
 //Musica de fundo do jogo
 
 // Configuração inicial do OpenGL e GLUT
-
-//Funcao que desenha terra plana
-void terraPlana()
-{
-    GLUquadric* quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_FILL);
-    // chama 01 glNormal para cada vértice.. poderia ser
-    // GLU_FLAT (01 por face) ou GLU_NONE
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    // chama 01 glTexCoord por vértice
-    gluQuadricTexture(quadObj, GL_TRUE);
-
-
-    //Parte de cima da Terra plana
-    glBindTexture(GL_TEXTURE_2D, earth);
-    gluDisk(quadObj, 0, 10, 20, 2);
-
-    //Parte do baixo da Terra plana
-    glPushMatrix();
-        glBindTexture(GL_TEXTURE_2D, groundFlatEarth);
-        glTranslatef(0,0,-2);
-        gluCylinder(quadObj, 2, 10, 2, 20,20);
-    glPopMatrix();
-    
-    
-    gluDeleteQuadric(quadObj);
-}
 
 void solidSphere(int radius, int stacks, int columns)
 {
@@ -216,9 +196,9 @@ void desenhaCubo(float tamanho)
 
 void desenhaHUD()
 {
-    float posX1 = 50;
-    float posX2 = 40;
-    float posX3 = 30;
+    float posX1 = 40;
+    float posX2 = 28;
+    float posX3 = 25;
 
     float posY1 = 38;
     float posY2 = 36;
@@ -234,7 +214,7 @@ void desenhaHUD()
     escreveTexto(GLUT_BITMAP_HELVETICA_18, "CAMERA", -posX1, posY1, -posZ); //x,y,z
     escreveNumero(GLUT_BITMAP_HELVETICA_18, camera, -posX2, posY1, -posZ);
 
-    if(camera<3)
+    if(camera < 3)
     {
         if(iluminacao)
         {
@@ -250,7 +230,6 @@ void desenhaHUD()
     escreveTexto(GLUT_BITMAP_HELVETICA_12, "O - Liga/Desliga orbitas", posX3, posY4, -posZ); //x,y,z
     escreveTexto(GLUT_BITMAP_HELVETICA_12, "P - Liga/Desliga plano orbital", posX3, posY5, -posZ); //x,y,z    
     escreveTexto(GLUT_BITMAP_HELVETICA_12, "WASD - Movimenta a camera", posX3, posY6, -posZ); //x,y,z
-
     
 }
 
@@ -290,6 +269,31 @@ void desenhaOrbita(float raio, float x, float y, float z)
         glEnd();
                 
       }
+}
+
+void quadradoDotamanhoDaTela(GLint qualTextura)
+{
+    glDisable(GL_LIGHTING); // Desabilita iluminação
+    
+    glColor4f(1,1,1,1);
+
+    int tamanho = 10;
+    // Habilita o uso de texturas
+    glEnable(GL_TEXTURE_2D);
+
+    // Começa a usar a textura que criamos
+    glBindTexture(GL_TEXTURE_2D, qualTextura);
+    glBegin(GL_TRIANGLE_FAN);
+        
+        // Associamos um canto da textura para cada vértice
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-tamanho, -tamanho,  -tamanho);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f( tamanho, -tamanho,  -tamanho);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f( tamanho,  tamanho,  -tamanho);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-tamanho,  tamanho,  -tamanho);
+
+     glEnd();
+
+     glDisable(GL_TEXTURE_2D);
 }
 
 void seOrbita(float distanciaAteOSol)
@@ -407,6 +411,32 @@ int distanciaAteOSol = 80;
     if (usarTextura) {
         glDisable(GL_TEXTURE_2D);
     }
+}
+
+//Funcao que desenha terra plana
+void terraPlana()
+{
+    GLUquadric* quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_FILL);
+    // chama 01 glNormal para cada vértice.. poderia ser
+    // GLU_FLAT (01 por face) ou GLU_NONE
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    // chama 01 glTexCoord por vértice
+    gluQuadricTexture(quadObj, GL_TRUE);
+
+    //Parte de cima da Terra plana
+    glBindTexture(GL_TEXTURE_2D, earth);
+    gluDisk(quadObj, 0, 10, 20, 2);
+
+    //Parte do baixo da Terra plana
+    glPushMatrix();
+        glBindTexture(GL_TEXTURE_2D, groundFlatEarth);
+        glTranslatef(0,0,-2);
+        gluCylinder(quadObj, 2, 10, 2, 20,20);
+    glPopMatrix();
+    
+    
+    gluDeleteQuadric(quadObj);
 }
 
 void desenhaLua(float tamanhoDaTerra)
@@ -669,7 +699,7 @@ void desenhaNetuno()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, neptune_rings);
         glRotatef(30, 1, 0, 0);
-        glColor4f(0.255, 0.412, 0.882,0.3);
+        glColor4f(0.255, 0.412, 0.882,1);
         solidPartialDisk(raioAnelPequeno, raioAnelGrande, esferaLados, esferaLados, 0, 360);
         glDisable(GL_BLEND);
         //ANEL
@@ -716,143 +746,157 @@ void desenhaCena()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    desenhaHUD();
 
-    int distanciaAteOSol;
-    //int distanciaTotal;      
-    
-    if(camera == 1) //camera de cima
-    {        
-        gluLookAt(0, 400, 50,
-                  0, 0, 0,
-                  0, 1, 0);
-    }
-
-
-    if(camera == 2) // camera inclinada WASD
-    {        
-        gluLookAt(0, 150, 100,
-                  olharX, olharY, 0,
-                  0, 1, 0);
+    if(estado == menu)
+    {
+        quadradoDotamanhoDaTela(inicio);
     }
     
-
-    if(camera == 3) //MERCURIO
+    if(estado == aplicacao)
     {
-        distanciaAteOSol = 50;
+        desenhaHUD();
+
+        int distanciaAteOSol;
+        //int distanciaTotal;      
         
-        gluLookAt(20*1.2*cos(anguloEsferaY/10) + distanciaAteOSol*1.2*cos(anguloEsferaY/10) + olharX, olharY, 20*1.2*sin(anguloEsferaY/10) + distanciaAteOSol*sin(anguloEsferaY/10),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/10), 0 ,distanciaAteOSol*sin(anguloEsferaY/10),
-                  0,1,0);  
-    }
+        if(camera == 1) //camera de cima
+        {        
+            gluLookAt(0, 400, 50,
+                    0, 0, 0,
+                    0, 1, 0);
+        }
 
-    if(camera == 4) //VENUS
-    {
-        distanciaAteOSol = 80;
+
+        if(camera == 2) // camera inclinada WASD
+        {        
+            gluLookAt(0, 150, 100,
+                    olharX, olharY, 0,
+                    0, 1, 0);
+        }
         
-        gluLookAt(20*1.2*cos(anguloEsferaY/15) + distanciaAteOSol*1.2*cos(anguloEsferaY/15) + olharX, olharY, 20*1.2*sin(anguloEsferaY/15) + distanciaAteOSol*sin(anguloEsferaY/15),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/15), 0 ,distanciaAteOSol*sin(anguloEsferaY/15),
-                  0,1,0);
 
-    }
+        if(camera == 3) //MERCURIO
+        {
+            distanciaAteOSol = 50;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/10) + distanciaAteOSol*1.2*cos(anguloEsferaY/10) + olharX, olharY, 20*1.2*sin(anguloEsferaY/10) + distanciaAteOSol*sin(anguloEsferaY/10),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/10), 0 ,distanciaAteOSol*sin(anguloEsferaY/10),
+                    0,1,0);  
+        }
 
-    if(camera == 5) //TERRA ->  //CAMERA NO SATÉLITE ESPECIAL
-    {
-        distanciaAteOSol = 130;
+        if(camera == 4) //VENUS
+        {
+            distanciaAteOSol = 80;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/15) + distanciaAteOSol*1.2*cos(anguloEsferaY/15) + olharX, olharY, 20*1.2*sin(anguloEsferaY/15) + distanciaAteOSol*sin(anguloEsferaY/15),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/15), 0 ,distanciaAteOSol*sin(anguloEsferaY/15),
+                    0,1,0);
+
+        }
+
+        if(camera == 5) //TERRA ->  //CAMERA NO SATÉLITE ESPECIAL
+        {
+            distanciaAteOSol = 130;
+            
+            gluLookAt(zoom*20*1.2*cos(anguloEsferaY/20) + distanciaAteOSol*1.2*cos(anguloEsferaY/20) + olharX , 1 + olharY, zoom*20*1.2*sin(anguloEsferaY/20) + distanciaAteOSol*sin(anguloEsferaY/20),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/20), 0 , distanciaAteOSol*sin(anguloEsferaY/20),
+                    0,1,0);
+
+        }
+
+        if(camera == 6) //MARTE
+        {
+            distanciaAteOSol = 160;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/25) + distanciaAteOSol*1.2*cos(anguloEsferaY/25) + olharX, olharY, 20*1.2*sin(anguloEsferaY/25) + distanciaAteOSol*sin(anguloEsferaY/25),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/25), 0 ,distanciaAteOSol*sin(anguloEsferaY/25),
+                    0,1,0);
+
+        }
+
+        if(camera == 7) //JUPITER
+        {
+            distanciaAteOSol = 200;
         
-        gluLookAt(zoom*20*1.2*cos(anguloEsferaY/20) + distanciaAteOSol*1.2*cos(anguloEsferaY/20) + olharX , 1 + olharY, zoom*20*1.2*sin(anguloEsferaY/20) + distanciaAteOSol*sin(anguloEsferaY/20),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/20), 0 , distanciaAteOSol*sin(anguloEsferaY/20),
-                  0,1,0);
+            gluLookAt(20*1.2*cos(anguloEsferaY/30) + distanciaAteOSol*1.2*cos(anguloEsferaY/30) + olharX, olharY, 20*1.2*sin(anguloEsferaY/30) + distanciaAteOSol*sin(anguloEsferaY/30),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/30), 0 ,distanciaAteOSol*sin(anguloEsferaY/30),
+                    0,1,0);
 
+        }
+
+        if(camera == 8) //SATURNO
+        {
+            distanciaAteOSol = 240;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/35) + distanciaAteOSol*1.2*cos(anguloEsferaY/35) + olharX, olharY, 20*1.2*sin(anguloEsferaY/35) + distanciaAteOSol*sin(anguloEsferaY/35),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/35), 0 ,distanciaAteOSol*sin(anguloEsferaY/35),
+                    0,1,0);
+
+        }
+
+        if(camera == 9) //URANO
+        {
+            distanciaAteOSol = 280;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/40) + distanciaAteOSol*1.2*cos(anguloEsferaY/40) + olharX, olharY, 20*1.2*sin(anguloEsferaY/40) + distanciaAteOSol*sin(anguloEsferaY/40),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/40), 0 ,distanciaAteOSol*sin(anguloEsferaY/40),
+                    0,1,0);
+
+        }
+
+        if(camera == 10) //NETUNO
+        {
+            distanciaAteOSol = 320;
+            
+            gluLookAt(20*1.2*cos(anguloEsferaY/45) + distanciaAteOSol*1.2*cos(anguloEsferaY/45) + olharX , olharY, 20*1.2*sin(anguloEsferaY/45) + distanciaAteOSol*sin(anguloEsferaY/45),
+                    distanciaAteOSol*1.2*cos(anguloEsferaY/45), 0 ,distanciaAteOSol*sin(anguloEsferaY/45),
+                    0,1,0);
+
+        }      
+
+        if(planoOrbital)
+        {
+            glPushMatrix();
+            glRotatef(-90, 1, 0, 0);
+            desenhaPlanoOrbital();
+            glPopMatrix();
+        }
+
+        // Propriedades da fonte de luz LIGHT0
+        glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif0);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0);
+        glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+
+        //desenhaCubo();
+
+        desenhaSkySphere();
+        desenhaSol();    
+
+        if(iluminacao)
+        {
+            glEnable(GL_LIGHTING);
+            glEnable(GL_LIGHT0); //Habilita iluminacaos
+        } else
+        {
+            glDisable(GL_LIGHTING);
+            glDisable(GL_LIGHT0); //Desabilita iluminacaos        
+        }
+
+        desenhaMercurio();
+        desenhaVenus();
+        desenhaTerra();
+        desenhaMarte();
+        desenhaJupiter();
+        desenhaSaturno();
+        desenhaUrano();
+        desenhaNetuno(); 
     }
 
-    if(camera == 6) //MARTE
+    if(estado == sair)
     {
-        distanciaAteOSol = 160;
-        
-        gluLookAt(20*1.2*cos(anguloEsferaY/25) + distanciaAteOSol*1.2*cos(anguloEsferaY/25) + olharX, olharY, 20*1.2*sin(anguloEsferaY/25) + distanciaAteOSol*sin(anguloEsferaY/25),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/25), 0 ,distanciaAteOSol*sin(anguloEsferaY/25),
-                  0,1,0);
-
+        quadradoDotamanhoDaTela(Sair);
     }
-
-    if(camera == 7) //JUPITER
-    {
-        distanciaAteOSol = 200;
-       
-        gluLookAt(20*1.2*cos(anguloEsferaY/30) + distanciaAteOSol*1.2*cos(anguloEsferaY/30) + olharX, olharY, 20*1.2*sin(anguloEsferaY/30) + distanciaAteOSol*sin(anguloEsferaY/30),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/30), 0 ,distanciaAteOSol*sin(anguloEsferaY/30),
-                  0,1,0);
-
-    }
-
-    if(camera == 8) //SATURNO
-    {
-        distanciaAteOSol = 240;
-        
-        gluLookAt(20*1.2*cos(anguloEsferaY/35) + distanciaAteOSol*1.2*cos(anguloEsferaY/35) + olharX, olharY, 20*1.2*sin(anguloEsferaY/35) + distanciaAteOSol*sin(anguloEsferaY/35),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/35), 0 ,distanciaAteOSol*sin(anguloEsferaY/35),
-                  0,1,0);
-
-    }
-
-    if(camera == 9) //URANO
-    {
-        distanciaAteOSol = 280;
-        
-        gluLookAt(20*1.2*cos(anguloEsferaY/40) + distanciaAteOSol*1.2*cos(anguloEsferaY/40) + olharX, olharY, 20*1.2*sin(anguloEsferaY/40) + distanciaAteOSol*sin(anguloEsferaY/40),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/40), 0 ,distanciaAteOSol*sin(anguloEsferaY/40),
-                  0,1,0);
-
-    }
-
-    if(camera == 10) //NETUNO
-    {
-        distanciaAteOSol = 320;
-        
-        gluLookAt(20*1.2*cos(anguloEsferaY/45) + distanciaAteOSol*1.2*cos(anguloEsferaY/45) + olharX , olharY, 20*1.2*sin(anguloEsferaY/45) + distanciaAteOSol*sin(anguloEsferaY/45),
-                  distanciaAteOSol*1.2*cos(anguloEsferaY/45), 0 ,distanciaAteOSol*sin(anguloEsferaY/45),
-                  0,1,0);
-
-    }      
-
-    if(planoOrbital)
-    {
-        glPushMatrix();
-        glRotatef(-90, 1, 0, 0);
-        desenhaPlanoOrbital();
-        glPopMatrix();
-    }
-
-    // Propriedades da fonte de luz LIGHT0
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif0);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
-
-    //desenhaCubo();
-
-    desenhaSkySphere();
-    desenhaSol();    
-
-    if(iluminacao)
-    {
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0); //Habilita iluminacaos
-    } else
-      {
-        glDisable(GL_LIGHTING);
-        glDisable(GL_LIGHT0); //Desabilita iluminacaos        
-      }
-
-    desenhaMercurio();
-    desenhaVenus();
-    desenhaTerra();
-    desenhaMarte();
-    desenhaJupiter();
-    desenhaSaturno();
-    desenhaUrano();
-    desenhaNetuno(); 
 
     glutSwapBuffers();
 }
@@ -862,8 +906,24 @@ void keyInput(unsigned char key, int x, int y)
 {
     switch (key)
     {
+
+    case 13:
+        if(estado == menu)
+        {
+            estado = aplicacao;
+        }
+        break;
+
     case 27:
-        exit(0);
+        if(estado == aplicacao)
+        {
+            estado++;
+        }
+        break;
+
+    case 't':
+    case 'T':
+        modoTerraPlana = !modoTerraPlana;
         break;
 
     case 'i':
@@ -873,9 +933,6 @@ void keyInput(unsigned char key, int x, int y)
     case 'c':
     case 'C':
         camera++;
-
-        olharX = 0;
-        olharY = 0;
 
         if(camera>= 3 && camera<=10)
         {
@@ -906,8 +963,23 @@ void keyInput(unsigned char key, int x, int y)
 
     case 's':
     case 'S':
-        olharY-=2;
+        if(estado == sair)
+        {
+            exit(0);
+        }
+
+        if(estado == aplicacao)
+        {
+            olharY-=2;
+        }        
         break;
+
+    case 'n':
+    case 'N':
+        if(estado == sair)
+        {
+            estado = aplicacao;
+        }
 
     case 'a':
     case 'A':
@@ -940,11 +1012,6 @@ void keyInput(unsigned char key, int x, int y)
         planoOrbital = !planoOrbital;
         break;
 
-    case 't':
-    case 'T':
-        modoTerraPlana = !modoTerraPlana;
-        break;
-
     case 45:
         zoom += 0.2;
         if(zoom == 0)
@@ -973,6 +1040,8 @@ void setup(void)
 {    
     glClearColor(0,0,0, 0.0);
     glEnable(GL_DEPTH_TEST);  // Ativa teste Z
+
+    estado = 1;
 
     carregaTextura();
 
@@ -1028,6 +1097,34 @@ int main(int argc, char *argv[])
 
 void carregaTextura()
 {
+    //carrega textura inicio
+    inicio = SOIL_load_OGL_texture
+	(
+		"texturas/inicio.png",
+		SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID,
+		SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
+	);
+
+    if(inicio == 0)
+    {
+        cout << "Problema ao carregar textura 0: " << SOIL_last_result() << endl;
+    }
+
+    //CARREGA TEXTURA SAIDA
+    Sair = SOIL_load_OGL_texture
+	(
+		"texturas/Sair.png",
+		SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID,
+		SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
+	);
+
+    if(Sair == 0)
+    {
+        cout << "Problema ao carregar textura 0: " << SOIL_last_result() << endl;
+    }
+    
     //carreta textura stewart
     stewart = SOIL_load_OGL_texture
 	(

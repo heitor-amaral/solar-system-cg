@@ -24,6 +24,7 @@ GitHub: https://github.com/heitor-amaral/tp2
 ##### O - Liga/Desliga orbitas
 ##### P - Liga/Desliga plano orbital
 ##### WASD - Movimenta a camera
+##### T - Modo Terra plana
 
 ## Para instalar dependencias necessárias do jogo:
 ######  sudo apt-get -y install build-essential mesa-common-dev gcc freeglut3-dev libglew-dev libsoil-dev libsdl1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev
